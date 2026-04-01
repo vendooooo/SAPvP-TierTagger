@@ -1,0 +1,87 @@
+name: Build Multiversion Jars
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build mc${{ matrix.profile }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ["1.21.10", "1.21.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x gradlew
+
+      - name: Print resolved build profile
+        run: ./gradlew printVersionProfile --no-daemon "-PmcProfile=${{ matrix.profile }}"
+
+      - name: Build SAPVPTierTagger for mc${{ matrix.profile }}
+        run: ./gradlew clean build --console=plain --no-daemon "-PmcProfile=${{ matrix.profile }}"
+
+      - name: Upload mc${{ matrix.profile }} jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAPVPTierTagger-mc${{ matrix.profile }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            build/libs/SAPVPTierTagger-mc${{ matrix.profile }}-*.jar
+            !build/libs/*-sources.jar
+
+  bundle:
+    name: Export multiversion bundle
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Download versioned artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: dist/artifacts
+          pattern: SAPVPTierTagger-mc*
+          merge-multiple: false
+
+      - name: Flatten jars into one folder
+        run: |
+          mkdir -p dist/multiversion
+          find dist/artifacts -type f -name "*.jar" -not -name "*-sources.jar" -exec cp {} dist/multiversion/ \;
+
+      - name: Publish combined artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAPVPTierTagger-multiversion-bundle
+          if-no-files-found: error
+          retention-days: 14
+          path: dist/multiversion/*.jar
+
+      - name: Write workflow summary
+        run: |
+          echo "## SAPVPTierTagger multiversion build" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Profiles built: \`1.21.10\`, \`1.21.11\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Per-version artifacts: \`SAPVPTierTagger-mc1.21.10\`, \`SAPVPTierTagger-mc1.21.11\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Combined artifact: \`SAPVPTierTagger-multiversion-bundle\`" >> "$GITHUB_STEP_SUMMARY"

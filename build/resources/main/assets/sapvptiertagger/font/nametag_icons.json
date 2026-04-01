@@ -1,0 +1,58 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/netherite_pot.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue000"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/sword.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue001"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/axe.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue002"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/smp.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue003"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/mace.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue004"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "sapvptiertagger:font/crystal.png",
+      "ascent": 8,
+      "height": 10,
+      "chars": [
+        "\ue005"
+      ]
+    }
+  ]
+}

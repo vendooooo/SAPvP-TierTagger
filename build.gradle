@@ -1,0 +1,107 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'maven-publish'
+}
+
+def versionMatrix = [
+	'1.21.10': [
+		minecraftVersion: '1.21.10',
+		minecraftRange  : '>=1.21.10 <1.21.11',
+		yarnMappings    : '1.21.10+build.3',
+		fabricApi       : '0.138.4+1.21.10',
+		clothConfig     : '20.0.149',
+		modMenu         : '16.0.1'
+	],
+	'1.21.11': [
+		minecraftVersion: '1.21.11',
+		minecraftRange  : '>=1.21.11 <1.21.12',
+		yarnMappings    : '1.21.11+build.4',
+		fabricApi       : '0.139.4+1.21.11',
+		clothConfig     : '21.11.153',
+		modMenu         : '17.0.0'
+	]
+]
+
+def selectedProfile = (findProperty("mcProfile") ?: findProperty("mc_profile") ?: "1.21.10").toString()
+if (!versionMatrix.containsKey(selectedProfile)) {
+	throw new GradleException("Unsupported mcProfile '${selectedProfile}'. Supported profiles: ${versionMatrix.keySet().join(', ')}")
+}
+
+def resolved = versionMatrix[selectedProfile]
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = "${project.archives_base_name}-mc${resolved.minecraftVersion}"
+}
+
+repositories {
+	mavenCentral()
+	maven { url = "https://maven.shedaniel.me/" }
+	maven { url = "https://maven.terraformersmc.com/releases/" }
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${resolved.minecraftVersion}"
+	mappings "net.fabricmc:yarn:${resolved.yarnMappings}:v2"
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${resolved.fabricApi}"
+
+	modImplementation("me.shedaniel.cloth:cloth-config-fabric:${resolved.clothConfig}") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
+	include("me.shedaniel.cloth:cloth-config-fabric:${resolved.clothConfig}")
+
+	modCompileOnly("com.terraformersmc:modmenu:${resolved.modMenu}")
+	modLocalRuntime("com.terraformersmc:modmenu:${resolved.modMenu}")
+}
+
+processResources {
+	inputs.property "version", project.version
+	inputs.property "minecraft_range", resolved.minecraftRange
+	inputs.property "loader_version", project.loader_version
+	inputs.property "mc_profile", selectedProfile
+
+	filesMatching(["fabric.mod.json", "quilt.mod.json"]) {
+		expand(
+			"version": project.version,
+			"minecraft_range": resolved.minecraftRange,
+			"loader_version": project.loader_version,
+			"mc_profile": selectedProfile
+		)
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 21
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+}
+
+tasks.register("printVersionProfile") {
+	group = "build"
+	description = "Prints the active Minecraft build profile and resolved dependency versions."
+	doLast {
+		println "SAPVPTierTagger profile: ${selectedProfile}"
+		println "  Minecraft : ${resolved.minecraftVersion}"
+		println "  Yarn      : ${resolved.yarnMappings}"
+		println "  Fabric API: ${resolved.fabricApi}"
+		println "  Cloth     : ${resolved.clothConfig}"
+		println "  Mod Menu  : ${resolved.modMenu}"
+		println "  Loader    : ${project.loader_version}+"
+	}
+}

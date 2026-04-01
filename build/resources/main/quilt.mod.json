@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "com.sapvp",
+    "id": "sapvptiertagger",
+    "version": "1.0.0",
+    "metadata": {
+      "name": "SAPVPTierTagger",
+      "description": "Client-side SAPVP nametags, cache, commands and detailed player panel for Minecraft 1.21.x.",
+      "contributors": {
+        "OpenAI Codex": "Creator"
+      },
+      "contact": {
+        "homepage": "https://www.sapvp.com/"
+      }
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "client": [
+        "com.sapvp.tiertagger.SAPVPTierTaggerClient"
+      ]
+    }
+  },
+  "mixin": [
+    "sapvptiertagger.mixins.json"
+  ],
+  "depends": [
+    {
+      "id": "minecraft",
+      "versions": ">=1.21.10 <1.21.11"
+    },
+    {
+      "id": "quilt_loader",
+      "versions": "*"
+    },
+    {
+      "id": "fabricloader",
+      "versions": ">=0.17.3"
+    },
+    {
+      "id": "cloth-config",
+      "versions": "*"
+    }
+  ]
+}
